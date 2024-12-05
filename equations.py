@@ -169,6 +169,8 @@ class equation:
             else:
                 notOperator = True
         if len(values) != len(operations)+1:
+            print(values)
+            print([str(op) for op in operations])
             raise ValueError("Equations must end with a number or variable.")
         #Iterate through operators in the order of self.order,
         #collapsing values together for each operation.

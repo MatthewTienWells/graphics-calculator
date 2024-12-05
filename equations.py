@@ -153,7 +153,7 @@ class equation:
         notOperator = False
         values = []
         operations = []
-        solutionKey = ((key, kwargs[key]) for key in kwargs)
+        solutionKey = ((key, kwargs[key]) for key in sorted(kwargs))
         if solutionKey in self.solutions.keys():
             return self.solutions[solutionKey]
         #Seperate values from operators

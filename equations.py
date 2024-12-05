@@ -61,6 +61,7 @@ class equation:
         self.allowed = allowed
         self.order = [operator(op) for op in allowed]
         self.symbols = []
+        self.solutions = {}
         if symbolStr != None:
             self.parse(symbolStr)
 
@@ -75,6 +76,7 @@ class equation:
         equation if one exists.
         """
         self.symbols = []
+        self.solutions = {}
         number = None
         subequation = 0
         subequationString = ""
@@ -151,6 +153,9 @@ class equation:
         notOperator = False
         values = []
         operations = []
+        solutionKey = ((key, kwargs[key]) for key in kwargs)
+        if solutionKey in self.solutions.keys():
+            return self.solutions[solutionKey]
         #Seperate values from operators
         for symbol in self.symbols:
             if type(symbol) == equation:
@@ -188,6 +193,7 @@ class equation:
                 
             for op in finishedOps:
                 operations.remove(op)
+        self.solutions[solutionKey] = values[0]
         return values[0]
 
 class variable:

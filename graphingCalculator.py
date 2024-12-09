@@ -78,12 +78,21 @@ canvas.grid(column=0,row=0)
 
 formulaInput = tkinter.Text(frm,height=2)
 formulaInput.grid(column=0,row=1)
-formula = equations.equation()
+formulas = [] #type: list[equations.equation]
 
-def drawFormula(input=formulaInput, view=view, formula=formula):
+formulaDisplay = ttk.Frame(frm,padding=2)
+formulaDisplay.grid(column=1,row=0)
+
+def drawFormula(
+        formula:equations.equation|None=None, input=formulaInput,
+        view=view
+    ):
     """Draw the provided formula on the canvas. Requires the only
     variable in the equation to be x.
     """
+    if formula == None:
+        formula = equations.equation()
+        formulas.append(formula)
     if input != None:
         formulaStr = input.get(1.0, "end-1c")
         formula.parse(formulaStr)
@@ -97,10 +106,17 @@ def drawFormula(input=formulaInput, view=view, formula=formula):
         zNum = num/view.zoom
         linePoints.append(toCanvas(zNum, formula.calculate(x=zNum),view))
 
-    canvas.delete("all")
-    drawAxes()
-
     canvas.create_line(linePoints)
+
+def listFormulas():
+    """Render the formulas provided as a list in the frame provided."""
+    count = 0
+    for formula in formulas:
+        tkinter.Label(
+            formulaDisplay,text="y="+str(formula)[1:-1]
+        ).grid(row=count,column=0)
+        count += 1
+
 
 def drawAxes(view=view):
     """Draw the origin axes with labels on the canvas. If the origin
@@ -133,30 +149,38 @@ def drawAxes(view=view):
     canvas.create_line([x, 0],[x, view.height])
     canvas.create_line([0, y],[view.width, y])
 
-def dragCanvas(event, view=view):
+def dragCanvas(event, view=view, formulas=formulas):
     """Handle the view of the coordinare plane being shifted by a
     click and drag.
     """
     view.drag(event)
     canvas.delete("all")
     drawAxes()
-    drawFormula(input=None)
+    for formula in formulas:
+        drawFormula(formula, input=None)
+    listFormulas()
 
 def beginDrag(event, view=view):
     """Pass on the beginning of a drag event to the canvas view."""
     view.dragStart(event)
 
-def zoomChange(event, view=view):
-    """Reduce the zoom level of the canvas."""
+def zoomChange(event, view=view, formulas=formulas):
+    """Reduce or increase the zoom level of the canvas."""
     view.zoom += int(event.delta/abs(event.delta))
     if view.zoom < 1:
         view.zoom = 1
     canvas.delete("all")
     drawAxes()
-    drawFormula(input=None)
+    for formula in formulas:
+        drawFormula(formula, input=None)
+
+def addFormula():
+    drawFormula()
+    listFormulas()
+    formulaInput.delete('1.0',tkinter.END)
 
 
-tkinter.Button(frm, text="Draw", command=drawFormula).grid(column=1,row=1)
+tkinter.Button(frm, text="Draw", command=addFormula).grid(column=1,row=1)
 
 drawAxes()
 

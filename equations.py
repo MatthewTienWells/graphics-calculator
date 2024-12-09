@@ -109,15 +109,22 @@ class equation:
                 if number != None:
                     if '.' in number:
                         self.__append__(float(number))
+                        number = None
+                    elif number == "-":
+                        pass
                     else:
                         self.__append__(int(number))
-                number = None
+                        number = None
             elif number == None:
                 number = char
             else:
                 number = number+char
             # Record operators as instances of the operator class.
             if char in self.allowed:
+                if number == "-":
+                    raise ValueError(
+                        "Operator " + char + " may not follow a -."
+                    )
                 self.__append__(operation(char))
                 continue
             if char not in "0123456789.":
@@ -136,7 +143,11 @@ class equation:
                 # Treat any still unhandled characters as a variable
                 # name.
                 else:
-                    self.__append__(variable(char))
+                    if number == "-":
+                        self.__append__(variable(char,sign="-"))
+                        number = None
+                    else:
+                        self.__append__(variable(char))
         if number != None:
             if '.' in number:
                 self.__append__(float(number))
@@ -163,7 +174,10 @@ class equation:
             elif type(symbol) in [int, float]:
                 values.append(symbol)
             elif type(symbol) == variable:
-                values.append(kwargs[symbol.symbol])
+                value = kwargs[symbol.symbol]
+                if symbol.sign == "-":
+                    value *= -1
+                values.append(value)
             
             if notOperator and type(symbol) != operation:
                 operations.append(operation("*"))
@@ -201,8 +215,9 @@ class variable:
     characters. Provides no particular logic, used only for checking
     types.
     """
-    def __init__(self, symbol:str):
+    def __init__(self, symbol:str, sign=""):
         self.symbol = symbol
+        self.sign = sign
 
     def __str__(self):
-        return self.symbol
+        return self.sign + self.symbol

@@ -4,7 +4,7 @@ Designed and coded by Matthew Tien Wells, 2024.
 
 import tkinter, equations
 from tkinter import ttk, Tk
-from math import floor
+from math import floor, ceil
 
 class canvasView:
     """Class representing the view of the coordinate plane shown on
@@ -110,24 +110,28 @@ def drawAxes(view=view):
     coords = toCanvas(0,0)
     x = coords[0]
     y = coords[1]
-    canvas.create_line([x, 0],[x, view.height])
-    canvas.create_line([0, y],[view.width, y])
     offset_x = floor(x) % view.zoom
     offset_y = floor(y) % view.zoom
     for num in range(0+offset_y, view.height, view.zoom):
-        canvas.create_line([(x-5, num),(x+5, num)])
+        if view.zoom > 3:
+            canvas.create_line([0, num], [view.height, num], fill='thistle2')
+            canvas.create_line([(x-5, num),(x+5, num)])
         labelY = round(fromCanvas(x,num)[1])
-        if labelY % 5 == 0 and labelY != 0:
+        if labelY % ceil(50/view.zoom) == 0 and labelY != 0:
             canvas.create_text(
                 min(max(10,x-12),view.width-10), num, text=labelY
                 )
     for num in range(0+offset_x, view.width, view.zoom):
-        canvas.create_line([(num, y-5),(num, y+5)])
+        if view.zoom > 3:
+            canvas.create_line([num, 0], [num, view.width], fill='thistle2')
+            canvas.create_line([(num, y-5),(num, y+5)])
         labelX = round(fromCanvas(num,y)[0])
-        if labelX % 5 == 0 and labelX != 0:
+        if labelX % ceil(50/view.zoom) == 0 and labelX != 0:
             canvas.create_text(
                 num, min(max(10,y-12),view.height-10), text=labelX
                 )
+    canvas.create_line([x, 0],[x, view.height])
+    canvas.create_line([0, y],[view.width, y])
 
 def dragCanvas(event, view=view):
     """Handle the view of the coordinare plane being shifted by a
@@ -142,11 +146,22 @@ def beginDrag(event, view=view):
     """Pass on the beginning of a drag event to the canvas view."""
     view.dragStart(event)
 
+def zoomChange(event, view=view):
+    """Reduce the zoom level of the canvas."""
+    view.zoom += int(event.delta/abs(event.delta))
+    if view.zoom < 1:
+        view.zoom = 1
+    canvas.delete("all")
+    drawAxes()
+    drawFormula(input=None)
+
+
 tkinter.Button(frm, text="Draw", command=drawFormula).grid(column=1,row=1)
 
 drawAxes()
 
 canvas.bind("<B1-Motion>", dragCanvas)
 canvas.bind("<Button-1>", beginDrag)
+canvas.bind("<MouseWheel>", zoomChange)
 
 root.mainloop()

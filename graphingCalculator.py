@@ -185,6 +185,10 @@ def drawAxes():
     canvas.create_line([0, y],[view.width, y])
 
 def constructSolutionFrame(event):
+    """Build a display that shows the x value of the provided event
+    in planar coordinates, as well as the solution to each formula at
+    that x value.
+    """
     hideSolutionFrame(event)
     x = fromCanvas(event.x, event.y)[0]
     ttk.Label(
@@ -204,6 +208,7 @@ def constructSolutionFrame(event):
     
 
 def hideSolutionFrame(event):
+    """Remove the solution display."""
     for child in solutionsDisplay.winfo_children():
         child.destroy()
 

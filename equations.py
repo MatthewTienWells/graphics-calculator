@@ -213,6 +213,9 @@ class equation:
         return values[0]
     
     def getSolution(self, **kwargs):
+        """Check for a cached solution for the equation with the given
+        variables and return it. If it does not exist, return None.
+        """
         solutionKey = tuple((key, kwargs[key]) for key in sorted(kwargs))
         if solutionKey in self.solutions.keys():
             return self.solutions[solutionKey]

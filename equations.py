@@ -56,7 +56,8 @@ class equation:
     allowedOperations as 'allowed'.
     """
     def __init__(
-        self, symbolStr=None, allowed=allowedOperations, operator=operation
+            self, color='black', symbolStr=None, allowed=allowedOperations,
+            operator=operation,
         ):
         self.allowed = allowed
         self.order = [operator(op) for op in allowed]
@@ -64,6 +65,7 @@ class equation:
         self.solutions = {}
         if symbolStr != None:
             self.parse(symbolStr)
+        self.color = color
 
     def __str__(self):
         return "(" + "".join(str(symbol) for symbol in self.symbols) + ")"

@@ -3,8 +3,10 @@ Designed and coded by Matthew Tien Wells, 2024.
 """
 
 import tkinter, equations
+import tkinter.colorchooser
 from tkinter import ttk, Tk
 from math import floor, ceil
+from functools import partial
 
 class canvasView:
     """Class representing the view of the coordinate plane shown on
@@ -46,7 +48,7 @@ class canvasView:
     
 view = canvasView()
 
-def toCanvas(x, y, view=view):
+def toCanvas(x, y):
     """Convert x and y coordinates to fit the tkinter canvas system."""
     x += view.x_center
     y += view.y_center
@@ -56,7 +58,7 @@ def toCanvas(x, y, view=view):
     y = view.height/2 - y
     return (x,y)
 
-def fromCanvas(x, y, view=view):
+def fromCanvas(x, y):
     """Convert x any y coordinates from the tkinter canvas system to
     a value on the 2 dimensional plane represented by view.
     """
@@ -68,8 +70,6 @@ def fromCanvas(x, y, view=view):
     y -= view.y_center
     return (x,y)
 
-
-
 root = Tk()
 frm = ttk.Frame(root, padding=10)
 frm.grid()
@@ -80,18 +80,30 @@ formulaInput = tkinter.Text(frm,height=2)
 formulaInput.grid(column=0,row=1)
 formulas = [] #type: list[equations.equation]
 
-formulaDisplay = ttk.Frame(frm,padding=2)
+formulaDisplay = ttk.Frame(frm,padding=5)
 formulaDisplay.grid(column=1,row=0)
 
-def drawFormula(
-        formula:equations.equation|None=None, input=formulaInput,
-        view=view
-    ):
+def chooseFormulaColor():
+    """Select a color to draw a new formula with."""
+    # High contrast color palette to ensure accessibility per WCAG
+    # standards. 
+    palette = [
+        '#C44601','#054FB9','#0073E6','#B51963','#5928ED'
+    ]
+    if len(formulas) == 0:
+        return palette[0]
+    try:
+        colorIndex = palette.index(formulas[-1].color)
+    except ValueError:
+        colorIndex = 0
+    return palette[(colorIndex + 1) % len(palette)]
+
+def drawFormula(formula:equations.equation|None=None, input=formulaInput):
     """Draw the provided formula on the canvas. Requires the only
     variable in the equation to be x.
     """
     if formula == None:
-        formula = equations.equation()
+        formula = equations.equation(color=chooseFormulaColor())
         formulas.append(formula)
     if input != None:
         formulaStr = input.get(1.0, "end-1c")
@@ -104,21 +116,40 @@ def drawFormula(
     bounds = round(0.5*view.width)+1
     for num in range(x-bounds, x+bounds):
         zNum = num/view.zoom
-        linePoints.append(toCanvas(zNum, formula.calculate(x=zNum),view))
+        linePoints.append(toCanvas(zNum, formula.calculate(x=zNum)))
 
-    canvas.create_line(linePoints)
+    canvas.create_line(linePoints, fill=formula.color)
+
+def removeFormula(formula:equations.equation):
+    """Delete a formula from the formula list and redraw the canvas
+    without it.
+    """
+    formulas.remove(formula)
+    canvas.delete("all")
+    drawAxes()
+    for formula in formulas:
+        drawFormula(formula, input=None)
+    listFormulas()
+
 
 def listFormulas():
     """Render the formulas provided as a list in the frame provided."""
     count = 0
+    for child in formulaDisplay.winfo_children():
+        child.destroy()
     for formula in formulas:
         tkinter.Label(
-            formulaDisplay,text="y="+str(formula)[1:-1]
-        ).grid(row=count,column=0)
+            formulaDisplay,text="y="+str(formula)[1:-1],
+            background=formula.color,foreground='white'
+        ).grid(row=count,column=0, sticky='W')
+        tkinter.Button(
+            formulaDisplay,text='X',background='red',foreground='white',
+            command=partial(removeFormula, formula=formula)
+        ).grid(row=count, column=1, padx=5, pady=3)
         count += 1
 
 
-def drawAxes(view=view):
+def drawAxes():
     """Draw the origin axes with labels on the canvas. If the origin
     axes are out of view, place the labels on the side of the canvas
     closest to the respective axis.
@@ -149,7 +180,7 @@ def drawAxes(view=view):
     canvas.create_line([x, 0],[x, view.height])
     canvas.create_line([0, y],[view.width, y])
 
-def dragCanvas(event, view=view, formulas=formulas):
+def dragCanvas(event):
     """Handle the view of the coordinare plane being shifted by a
     click and drag.
     """
@@ -160,11 +191,11 @@ def dragCanvas(event, view=view, formulas=formulas):
         drawFormula(formula, input=None)
     listFormulas()
 
-def beginDrag(event, view=view):
+def beginDrag(event):
     """Pass on the beginning of a drag event to the canvas view."""
     view.dragStart(event)
 
-def zoomChange(event, view=view, formulas=formulas):
+def zoomChange(event):
     """Reduce or increase the zoom level of the canvas."""
     view.zoom += int(event.delta/abs(event.delta))
     if view.zoom < 1:
@@ -175,6 +206,9 @@ def zoomChange(event, view=view, formulas=formulas):
         drawFormula(formula, input=None)
 
 def addFormula():
+    """Add a new formula to the formula list, draw it, and clear the
+    input box.
+    """
     drawFormula()
     listFormulas()
     formulaInput.delete('1.0',tkinter.END)

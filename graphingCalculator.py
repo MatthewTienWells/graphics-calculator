@@ -71,6 +71,7 @@ def fromCanvas(x, y):
     return (x,y)
 
 root = Tk()
+root.title("Graphing Calculator")
 frm = ttk.Frame(root, padding=10)
 frm.grid()
 canvas = tkinter.Canvas(frm, width=view.width, height=view.height)
@@ -82,6 +83,9 @@ formulas = [] #type: list[equations.equation]
 
 formulaDisplay = ttk.Frame(frm,padding=5)
 formulaDisplay.grid(column=1,row=0)
+
+solutionsDisplay = tkinter.Frame(root)
+solutionsDisplay.grid(row=0,column=3)
 
 def chooseFormulaColor():
     """Select a color to draw a new formula with."""
@@ -140,7 +144,7 @@ def listFormulas():
     for formula in formulas:
         tkinter.Label(
             formulaDisplay,text="y="+str(formula)[1:-1],
-            background=formula.color,foreground='white'
+            foreground=formula.color
         ).grid(row=count,column=0, sticky='W')
         tkinter.Button(
             formulaDisplay,text='X',background='red',foreground='white',
@@ -179,6 +183,29 @@ def drawAxes():
                 )
     canvas.create_line([x, 0],[x, view.height])
     canvas.create_line([0, y],[view.width, y])
+
+def constructSolutionFrame(event):
+    hideSolutionFrame(event)
+    x = fromCanvas(event.x, event.y)[0]
+    ttk.Label(
+        solutionsDisplay,text="x="+str(round(x,7))
+    ).grid(row=0,column=0,sticky='NW')
+    count = 1
+    for formula in formulas:
+        solution = formula.getSolution(x=x)
+        if solution:
+            text = str(formula)[1:-1] + "="
+            text += str(round(solution,7))
+            solution = ttk.Label(
+                solutionsDisplay, text=text, foreground=formula.color
+            )
+            solution.grid(row=count,column=0,sticky='NW')
+            count += 1
+    
+
+def hideSolutionFrame(event):
+    for child in solutionsDisplay.winfo_children():
+        child.destroy()
 
 def dragCanvas(event):
     """Handle the view of the coordinare plane being shifted by a
@@ -221,5 +248,8 @@ drawAxes()
 canvas.bind("<B1-Motion>", dragCanvas)
 canvas.bind("<Button-1>", beginDrag)
 canvas.bind("<MouseWheel>", zoomChange)
+canvas.bind("<Enter>", constructSolutionFrame)
+canvas.bind("<Motion>", constructSolutionFrame)
+canvas.bind("<Leave>", hideSolutionFrame)
 
 root.mainloop()

@@ -166,7 +166,7 @@ class equation:
         notOperator = False
         values = []
         operations = []
-        solutionKey = ((key, kwargs[key]) for key in sorted(kwargs))
+        solutionKey = tuple((key, kwargs[key]) for key in sorted(kwargs))
         if solutionKey in self.solutions.keys():
             return self.solutions[solutionKey]
         #Seperate values from operators
@@ -211,6 +211,13 @@ class equation:
                 operations.remove(op)
         self.solutions[solutionKey] = values[0]
         return values[0]
+    
+    def getSolution(self, **kwargs):
+        solutionKey = tuple((key, kwargs[key]) for key in sorted(kwargs))
+        if solutionKey in self.solutions.keys():
+            return self.solutions[solutionKey]
+        else:
+            return None
 
 class variable:
     """Class meant for distinguishing mathematical variables from string
